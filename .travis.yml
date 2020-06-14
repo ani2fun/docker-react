@@ -1,0 +1,30 @@
+language: generic
+# Tell travis we need a copy of docker running
+sudo: required
+
+services:
+        - docker
+
+# Build our image using Dockerfile.dev
+before_install:
+        - docker build -t ani2fun/docker-react -f Dockerfile.dev .
+
+# Tell Travis how to run our test suite
+script:
+        - docker run -e CI=true ani2fun/docker-react npm run test -- --coverage #(docker run command should contain -e CI=true to exit immediately)
+
+
+# Tell travis how to deploy our code to AWS
+deploy:
+    provider: elasticbeanstalk
+    region: "us-east-2"
+    app: "docker-react"
+    env: "DockerReact-env"
+    bucket_name: "elasticbeanstalk-us-east-2-533536259249" # inside services -> S3 scalable cloud ... copy 
+    bucket_path: "docker-react" # same as app name
+    on:
+        branch: master
+        #Use IAM from aws to add user and add keys -> Add user-> Username: docker-react-travis-ci -> programmatic access only -> attach existing policy directly -> (Persmission) AWSElasticbeanstalkFullAccess -> next and generate keys
+        #add it in env secrets in TravisCI settings as 
+    access_key_id: $AWS_ACCESS_KEY
+    secret_access_id: $AWS_SECRET_KEY
